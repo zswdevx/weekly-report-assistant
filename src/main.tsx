@@ -13,8 +13,9 @@ import 'dayjs/locale/zh-cn'
 import './index.css'
 import { ConfigProvider, ThemeConfig } from 'antd'
 import { initDatabase } from './utils/db'
-
-await initDatabase()
+;(async () => {
+  await initDatabase()
+})()
 
 dayjs.extend(customParseFormat)
 dayjs.extend(advancedFormat)
