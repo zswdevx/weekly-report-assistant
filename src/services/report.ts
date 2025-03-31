@@ -1,6 +1,6 @@
 import { getAllProjectConfigs } from './projectConfig'
 import { Command } from '@tauri-apps/plugin-shell'
-import { message } from 'antd'
+import { notification } from 'antd'
 import { getApiKey } from './settings'
 
 async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOutput[]> {
@@ -28,8 +28,13 @@ async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOu
     const output = await Command.create('git', args).execute()
 
     if (output.stderr) {
-      console.error(`Git log error: ${output.stderr}`)
-      message.error('获取 Git 日志失败')
+      notification.error({
+        message: '获取 Git 日志失败',
+        description: output.stderr,
+        duration: 5,
+        key: output.code?.toString(),
+        placement: 'top',
+      })
       return []
     }
 
@@ -110,11 +115,19 @@ export const polishReport = async (content: string) => {
         messages: [
           {
             role: 'system',
-            content: '你是一个专业的文案编辑，负责优化周报内容，使其更加专业和易读。',
+            content: '你是一位技术周报编辑专家，擅长将开发者的Git提交记录转化为结构化、专业的工作周报。',
           },
           {
             role: 'user',
-            content: `请润色以下周报内容：\n${content}`,
+            content: `请基于以下Git提交记录，生成一份专业的技术周报：
+  1. 按项目分类整理内容
+  2. 合并相似的提交内容
+  3. 使用技术术语准确描述工作内容
+  4. 突出重要的功能开发和问题修复
+  5. 保持简洁专业的语言风格
+
+  原始提交记录：
+  ${content}`,
           },
         ],
         stream: false,
