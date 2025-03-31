@@ -1,4 +1,4 @@
-name: "publish"
+name: 'publish'
 
 on:
   push:
@@ -13,8 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "windows-latest"
-            args: ""
+          - platform: 'windows-latest'
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -35,12 +35,28 @@ jobs:
         run: pnpm install
 
       - uses: tauri-apps/tauri-action@v0
+        id: tauri-build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
-          releaseName: "App v__VERSION__"
-          releaseBody: "See the assets to download this version and install."
+          releaseName: 'App v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # 添加以下步骤来上传单独的 exe 文件
+      - name: Prepare exe file for release
+        shell: bash
+        run: |
+          mkdir -p release-files
+          cp src-tauri/target/release/weekly-report-assistant.exe release-files/
+
+      - name: Upload exe to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/weekly-report-assistant.exe
+          tag_name: ${{ steps.tauri-build.outputs.tagName }}
+          draft: true
+          token: ${{ secrets.GITHUB_TOKEN }}
