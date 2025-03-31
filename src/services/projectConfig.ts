@@ -90,3 +90,74 @@ export async function deleteProjectConfig(id: number): Promise<boolean> {
     return false
   }
 }
+
+export async function batchCreateProjectConfigs(
+  configs: Array<Omit<API.ProjectConfig, 'id' | 'createTime' | 'updateTime'>>
+): Promise<boolean> {
+  try {
+    let success = true
+    for (const config of configs) {
+      const res = await executeQuery('INSERT INTO project_configs (sort, name, path, branches) VALUES (?, ?, ?, ?)', [
+        config.sort || 0,
+        config.name,
+        config.path,
+        (config.branches || ['master']).join(','),
+      ])
+      if (res.rowsAffected <= 0) {
+        success = false
+      }
+    }
+    return success
+  } catch (error) {
+    console.error('批量创建项目配置失败:', error)
+    return false
+  }
+}
+
+export async function batchUpdateProjectConfigs(
+  configs: Array<Partial<Omit<API.ProjectConfig, 'createTime' | 'updateTime'>>>
+): Promise<boolean> {
+  try {
+    let success = true
+    for (const config of configs) {
+      if (!config.id) {
+        console.error('更新项目配置缺少ID:', config)
+        success = false
+        continue
+      }
+
+      const { id, ...resetConfig } = config
+      const sets: string[] = []
+      const values: any[] = []
+
+      Object.entries(resetConfig).forEach(([key, value]) => {
+        if (value !== undefined) {
+          sets.push(`${key} = ?`)
+          if (key === 'branches') {
+            values.push((value as string[]).join(','))
+          } else {
+            values.push(value)
+          }
+        }
+      })
+
+      if (sets.length === 0) {
+        continue
+      }
+
+      values.push(id)
+      const res = await executeQuery(
+        `UPDATE project_configs SET ${sets.join(', ')}, update_time = CURRENT_TIMESTAMP WHERE id = ?`,
+        values
+      )
+
+      if (res.rowsAffected <= 0) {
+        success = false
+      }
+    }
+    return success
+  } catch (error) {
+    console.error('批量更新项目配置失败:', error)
+    return false
+  }
+}
