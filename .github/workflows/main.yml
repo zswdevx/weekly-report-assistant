@@ -53,14 +53,40 @@ jobs:
           mkdir -p release-files
           cp src-tauri/target/release/weekly-report-assistant.exe release-files/
 
-      # 将单独的 exe 文件上传到同一 release
-      - name: Upload additional exe to the same release
-        uses: softprops/action-gh-release@v2
+      # 将单独的 exe 文件上传到已存在的 Release
+      - name: Upload additional exe to existing release
+        uses: actions/github-script@v6
         with:
-          files: release-files/weekly-report-assistant.exe
-          tag_name: ${{ steps.tauri-build.outputs.tagName }}
-          draft: true
-          name: ${{ steps.tauri-build.outputs.releaseName }}
-          body: ${{ steps.tauri-build.outputs.releaseBody }}
-          append_body: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const tagName = '${{ steps.tauri-build.outputs.tagName }}';
+            const exePath = path.join('release-files', 'weekly-report-assistant.exe');
+
+            // 获取当前 Release
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const release = releases.find(r => r.tag_name === tagName && r.draft === true);
+
+            if (!release) {
+              core.setFailed(`Could not find draft release with tag ${tagName}`);
+              return;
+            }
+
+            console.log(`Found release: ${release.id}, uploading exe file...`);
+
+            // 上传文件到已有的 Release
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              name: 'weekly-report-assistant.exe',
+              data: fs.readFileSync(exePath)
+            });
+
+            console.log('Successfully uploaded exe file to the release');
