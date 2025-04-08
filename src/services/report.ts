@@ -1,7 +1,7 @@
 import { getAllProjectConfigs } from './projectConfig'
 import { Command } from '@tauri-apps/plugin-shell'
 import { notification } from 'antd'
-import { getApiKey } from './settings'
+import { getApiKey, getReportPrompt, getUserPrompt } from './settings'
 
 async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOutput[]> {
   const { projectPath, startDate, endDate, authors } = options
@@ -104,6 +104,15 @@ export const polishReport = async (content: string) => {
       }
     }
 
+    const systemPrompt = await getReportPrompt()
+    const userPromptTemplate = await getUserPrompt()
+
+    // 将用户提示词模板与内容拼接
+    const userPrompt = `${userPromptTemplate}
+
+原始提交记录：
+${content}`
+
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -115,19 +124,11 @@ export const polishReport = async (content: string) => {
         messages: [
           {
             role: 'system',
-            content: '你是一位技术周报编辑专家，擅长将开发者的Git提交记录转化为结构化、专业的工作周报。',
+            content: systemPrompt,
           },
           {
             role: 'user',
-            content: `请基于以下Git提交记录，生成一份专业的技术周报：
-  1. 按项目分类整理内容
-  2. 合并相似的提交内容
-  3. 使用技术术语准确描述工作内容
-  4. 突出重要的功能开发和问题修复
-  5. 保持简洁专业的语言风格
-
-  原始提交记录：
-  ${content}`,
+            content: userPrompt,
           },
         ],
         stream: false,

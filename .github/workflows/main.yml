@@ -64,6 +64,7 @@ jobs:
 
             const tagName = '${{ steps.tauri-build.outputs.tagName }}';
             const exePath = path.join('release-files', 'weekly-report-assistant.exe');
+            const exeFileName = 'weekly-report-assistant.exe';
 
             // 获取当前 Release
             const { data: releases } = await github.rest.repos.listReleases({
@@ -78,14 +79,27 @@ jobs:
               return;
             }
 
-            console.log(`Found release: ${release.id}, uploading exe file...`);
+            console.log(`Found release: ${release.id}, preparing to upload exe file...`);
 
-            // 上传文件到已有的 Release
+            // 检查是否已存在同名资源
+            const existingAssets = release.assets.filter(asset => asset.name === exeFileName);
+
+            // 如果存在同名资源，先删除
+            for(const asset of existingAssets) {
+              console.log(`Deleting existing asset: ${asset.id} (${asset.name})`);
+              await github.rest.repos.deleteReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                asset_id: asset.id
+              });
+            }
+
+            // 上传文件到 Release
             await github.rest.repos.uploadReleaseAsset({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.id,
-              name: 'weekly-report-assistant.exe',
+              name: exeFileName,
               data: fs.readFileSync(exePath)
             });
 

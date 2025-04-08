@@ -19,6 +19,8 @@ declare namespace API {
     name?: string
     page: number
     pageSize: number
+    sortField?: string
+    sortOrder?: 'ascend' | 'descend' | null
   }
 
   type ReportData = {

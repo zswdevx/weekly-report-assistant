@@ -17,7 +17,7 @@ export async function createProjectConfig(
 }
 
 export async function getProjectConfigs(parmas: API.GetProjectConfigsInput): Promise<API.GetProjectConfigsOutput> {
-  const { name, page, pageSize } = parmas
+  const { name, page, pageSize, sortField, sortOrder } = parmas
   const whereClause = name ? 'WHERE name LIKE ?' : ''
   const params = name ? [`%${name}%`] : []
 
@@ -26,10 +26,17 @@ export async function getProjectConfigs(parmas: API.GetProjectConfigsInput): Pro
     params
   )
 
+  // 构建排序子句
+  let orderClause = 'ORDER BY sort ASC'
+  if (sortField && sortOrder) {
+    const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
+    orderClause = `ORDER BY ${sortField} ${direction}`
+  }
+
   const offset = (page - 1) * pageSize
   const data = await select<DB.ProjectConfig>(
     `SELECT * FROM project_configs ${whereClause} 
-     ORDER BY sort ASC LIMIT ? OFFSET ?`,
+     ${orderClause} LIMIT ? OFFSET ?`,
     [...params, pageSize, offset]
   )
 
