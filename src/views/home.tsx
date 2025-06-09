@@ -65,8 +65,12 @@ const Home = () => {
   }
 
   const onCopy = async () => {
-    await writeText(report)
-    message.success('复制成功')
+    try {
+      await writeText(report)
+      message.success('复制成功')
+    } catch (error) {
+      message.error('复制失败，请重试')
+    }
   }
 
   return (
@@ -81,7 +85,9 @@ const Home = () => {
             <Button type="primary" danger onClick={handlePolish} loading={polishLoading} disabled={!report}>
               AI 润色
             </Button>
-            <Button onClick={onCopy}>复制</Button>
+            <Button onClick={onCopy} disabled={!report}>
+              复制
+            </Button>
           </Flex>
         </Card>
         <Card>

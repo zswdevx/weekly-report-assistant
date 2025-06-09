@@ -27,7 +27,7 @@ export async function getProjectConfigs(parmas: API.GetProjectConfigsInput): Pro
   )
 
   // 构建排序子句
-  let orderClause = 'ORDER BY sort ASC'
+  let orderClause = 'ORDER BY sort DESC' // 默认按 sort 字段降序
   if (sortField && sortOrder) {
     const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
     orderClause = `ORDER BY ${sortField} ${direction}`
@@ -52,7 +52,7 @@ export async function getProjectConfigs(parmas: API.GetProjectConfigsInput): Pro
 }
 
 export async function getAllProjectConfigs(): Promise<API.ProjectConfig[]> {
-  const data = await select<DB.ProjectConfig>('SELECT * FROM project_configs ORDER BY sort ASC')
+  const data = await select<DB.ProjectConfig>('SELECT * FROM project_configs ORDER BY sort DESC')
   return data.map(({ create_time, update_time, ...item }) => ({
     ...item,
     createTime: create_time,

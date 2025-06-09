@@ -23,7 +23,6 @@ const Projects = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [batchModalOpen, setBatchModalOpen] = useState(false)
   const [batchMode, setBatchMode] = useState<'add' | 'update'>('add')
-  const [recordToEdit, setRecordToEdit] = useState<API.ProjectConfig>()
   const [batchData, setBatchData] = useState<any[]>([])
   const [selectedRows, setSelectedRows] = useState<API.ProjectConfig[]>([])
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -38,7 +37,7 @@ const Projects = () => {
         pageSize,
         name: formData.keyword,
         sortField: sorter?.field || 'sort',
-        sortOrder: sorter?.order || 'ascend',
+        sortOrder: sorter?.order || 'descend',
       })
     },
     {
@@ -54,7 +53,6 @@ const Projects = () => {
 
   const onCancel = () => {
     setModalOpen(false)
-    setRecordToEdit(undefined)
   }
 
   const onBatchCancel = () => {
@@ -180,7 +178,7 @@ const Projects = () => {
       align: 'center',
       width: 60,
       sorter: true,
-      defaultSortOrder: 'ascend',
+      defaultSortOrder: 'descend',
     },
     {
       title: '项目',
@@ -215,7 +213,7 @@ const Projects = () => {
           <Button
             type="link"
             onClick={() => {
-              setRecordToEdit(record)
+              form.setFieldsValue(record)
               setModalOpen(true)
             }}
           >
@@ -341,71 +339,67 @@ const Projects = () => {
         </Card>
       </Flex>
 
-      {modalOpen && (
-        <Modal title={isEdit ? '编辑' : '添加'} open onCancel={onCancel} onOk={form.submit} destroyOnClose>
-          <Form
-            form={form}
-            labelCol={{ span: 4 }}
-            onFinish={onFinish}
-            preserve={false}
-            initialValues={{ sort: 0, branches: ['master'], ...recordToEdit }}
-          >
-            <Form.Item name="id" hidden>
-              <Input disabled />
-            </Form.Item>
-            <Form.Item label="项目名称" name="name" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item label="项目路径" name="path" rules={[{ required: true }]}>
-              <Input.Search enterButton="选择项目" onSearch={selectFolder} />
-            </Form.Item>
-            <Form.Item label="排序" name="sort" rules={[{ required: true }]}>
-              <InputNumber min={0} />
-            </Form.Item>
-            <Form.Item label="分支" name="branches" extra="默认包含 origin/[branch]">
-              <DynamicTag name="branches" />
-            </Form.Item>
-          </Form>
-        </Modal>
-      )}
-
-      {batchModalOpen && (
-        <Modal
-          title={batchMode === 'add' ? '批量添加项目' : '批量编辑项目'}
-          open
-          onCancel={onBatchCancel}
-          onOk={onBatchFinish}
-          destroyOnClose
-          width={900}
+      <Modal title={isEdit ? '编辑' : '添加'} open={modalOpen} onCancel={onCancel} onOk={form.submit} destroyOnClose>
+        <Form
+          form={form}
+          labelCol={{ span: 4 }}
+          onFinish={onFinish}
+          preserve={false}
+          initialValues={{ sort: 0, branches: ['master'] }}
         >
-          <Flex vertical gap={16}>
-            <div>
-              <p>{batchMode === 'add' ? '批量添加项目配置' : '批量编辑项目配置'}</p>
-            </div>
+          <Form.Item name="id" hidden>
+            <Input disabled />
+          </Form.Item>
+          <Form.Item label="项目名称" name="name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="项目路径" name="path" rules={[{ required: true }]}>
+            <Input.Search enterButton="选择项目" onSearch={selectFolder} />
+          </Form.Item>
+          <Form.Item label="排序" name="sort" rules={[{ required: true }]}>
+            <InputNumber min={0} />
+          </Form.Item>
+          <Form.Item label="分支" name="branches" extra="默认包含 origin/[branch]">
+            <DynamicTag name="branches" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
-            <Table
-              dataSource={batchData}
-              columns={branchColumns}
-              pagination={false}
-              size="small"
-              bordered
-              rowKey={(record, index) => (record?.id ? record.id.toString() : index?.toString())}
-              scroll={{ x: 'max-content' }}
-              footer={() => (
-                <Button
-                  type="dashed"
-                  onClick={addBatchRow}
-                  block
-                  icon={<PlusOutlined />}
-                  disabled={batchMode === 'update'}
-                >
-                  新增一行
-                </Button>
-              )}
-            />
-          </Flex>
-        </Modal>
-      )}
+      <Modal
+        title={batchMode === 'add' ? '批量添加项目' : '批量编辑项目'}
+        open={batchModalOpen}
+        onCancel={onBatchCancel}
+        onOk={onBatchFinish}
+        destroyOnClose
+        width={900}
+      >
+        <Flex vertical gap={16}>
+          <div>
+            <p>{batchMode === 'add' ? '批量添加项目配置' : '批量编辑项目配置'}</p>
+          </div>
+
+          <Table
+            dataSource={batchData}
+            columns={branchColumns}
+            pagination={false}
+            size="small"
+            bordered
+            rowKey={(record, index) => (record?.id ? record.id.toString() : index?.toString())}
+            scroll={{ x: 'max-content' }}
+            footer={() => (
+              <Button
+                type="dashed"
+                onClick={addBatchRow}
+                block
+                icon={<PlusOutlined />}
+                disabled={batchMode === 'update'}
+              >
+                新增一行
+              </Button>
+            )}
+          />
+        </Flex>
+      </Modal>
     </>
   )
 }
