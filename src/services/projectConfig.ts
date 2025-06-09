@@ -43,7 +43,10 @@ export async function getProjectConfigs(parmas: API.GetProjectConfigsInput): Pro
   return {
     total: totalResult.total,
     list: data.map((item) => ({
-      ...item,
+      id: item.id,
+      name: item.name,
+      path: item.path,
+      sort: item.sort,
       createTime: item.create_time,
       updateTime: item.update_time,
       branches: item.branches ? item.branches.split(',') : [],

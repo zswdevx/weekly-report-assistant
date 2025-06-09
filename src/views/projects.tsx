@@ -127,8 +127,8 @@ const Projects = () => {
         directory: true,
         multiple: false,
       })
-      form.setFieldValue('name', folderPath?.split('\\').at(-1))
-      form.setFieldValue('path', folderPath)
+      if (!folderPath) return
+      form.setFieldsValue({ name: folderPath?.split('\\').at(-1), path: folderPath })
     } catch (error) {
       message.error('Error selecting folder')
       console.error('Error selecting folder:', error)
@@ -213,8 +213,10 @@ const Projects = () => {
           <Button
             type="link"
             onClick={() => {
-              form.setFieldsValue(record)
               setModalOpen(true)
+              setTimeout(() => {
+                form.setFieldsValue(record)
+              }, 100)
             }}
           >
             编辑
