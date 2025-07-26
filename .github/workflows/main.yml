@@ -26,17 +26,17 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+          run_install: false
+
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
-
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: false
 
       - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
@@ -53,10 +53,13 @@ jobs:
           sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
 
       - name: 安装前端依赖
-        run: pnpm install
+        run: |
+          echo "使用的 pnpm 版本："
+          pnpm --version
+          pnpm install --no-frozen-lockfile
 
       - name: 构建 Tauri 应用
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
