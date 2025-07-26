@@ -1,106 +1,86 @@
-name: 'publish'
+name: 自动构建与发布
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
 
 jobs:
-  publish-tauri:
-    permissions:
-      contents: write
+  build:
     strategy:
       fail-fast: false
       matrix:
+        platform: [windows-latest]
         include:
-          - platform: 'windows-latest'
-            args: ''
+          - platform: windows-latest
+            target: windows-latest
+            buildFolder: target/release/bundle/nsis
+            artifact: weekly-report-assistant_windows_installer
 
     runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: setup node
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20
+          cache: 'pnpm'
 
-      - name: install Rust stable
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: 安装 Rust 工具链
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: 设置 Rust 缓存
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
-      - name: install frontend dependencies
+      - name: 安装系统依赖
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+
+      - name: 安装前端依赖
         run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
-        id: tauri-build
+      - name: 构建 Tauri 应用
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
-          releaseName: 'Weekly Report Assistant v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseName: '周报助手 v__VERSION__'
+          releaseBody: '请查看 GitHub Releases 页面获取更多信息。'
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
 
-      # 准备单独的 exe 文件
-      - name: Prepare exe file for release
-        shell: bash
-        run: |
-          mkdir -p release-files
-          cp src-tauri/target/release/weekly-report-assistant.exe release-files/
-
-      # 将单独的 exe 文件上传到已存在的 Release
-      - name: Upload additional exe to existing release
-        uses: actions/github-script@v6
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const path = require('path');
+          path: artifacts
 
-            const tagName = '${{ steps.tauri-build.outputs.tagName }}';
-            const exePath = path.join('release-files', 'weekly-report-assistant.exe');
-            const exeFileName = 'weekly-report-assistant.exe';
-
-            // 获取当前 Release
-            const { data: releases } = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-
-            const release = releases.find(r => r.tag_name === tagName && r.draft === true);
-
-            if (!release) {
-              core.setFailed(`Could not find draft release with tag ${tagName}`);
-              return;
-            }
-
-            console.log(`Found release: ${release.id}, preparing to upload exe file...`);
-
-            // 检查是否已存在同名资源
-            const existingAssets = release.assets.filter(asset => asset.name === exeFileName);
-
-            // 如果存在同名资源，先删除
-            for(const asset of existingAssets) {
-              console.log(`Deleting existing asset: ${asset.id} (${asset.name})`);
-              await github.rest.repos.deleteReleaseAsset({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                asset_id: asset.id
-              });
-            }
-
-            // 上传文件到 Release
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.id,
-              name: exeFileName,
-              data: fs.readFileSync(exePath)
-            });
-
-            console.log('Successfully uploaded exe file to the release');
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/**.{exe,msi,dmg,deb,AppImage}
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

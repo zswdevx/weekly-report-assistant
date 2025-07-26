@@ -1,4 +1,4 @@
-import { HomeOutlined, ProjectOutlined, SettingOutlined } from '@ant-design/icons'
+import { HistoryOutlined, HomeOutlined, ProjectOutlined, SettingOutlined } from '@ant-design/icons'
 import { Col, Flex, Layout, Menu, MenuProps, Row, Typography } from 'antd'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import logo from '@/assets/logo.svg'
@@ -13,6 +13,7 @@ const { Header, Content, Sider } = Layout
 
 const items: MenuProps['items'] = [
   { key: '/home', icon: <HomeOutlined />, label: <Link to="/home">周报</Link> },
+  { key: '/history', icon: <HistoryOutlined />, label: <Link to="/history">历史</Link> },
   {
     key: '/projects',
     icon: <ProjectOutlined />,

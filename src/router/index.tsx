@@ -5,6 +5,7 @@ import Layouts from '../layouts'
 const Home = lazy(() => import('../views/home'))
 const Settings = lazy(() => import('../views/settings'))
 const Projects = lazy(() => import('../views/projects'))
+const History = lazy(() => import('../views/history'))
 
 const routes = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const routes = createBrowserRouter([
       {
         path: '/settings',
         element: <Settings />,
+      },
+      {
+        path: '/history',
+        element: <History />,
       },
     ],
   },

@@ -56,6 +56,23 @@ pub fn get_migrations() -> Vec<Migration> {
 5. 保持简洁专业的语言风格' WHERE user_prompt IS NULL;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "Add unique constraint to weekly_reports title",
+            sql: "CREATE TABLE IF NOT EXISTS weekly_reports_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL UNIQUE,
+                    content TEXT,
+                    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                INSERT OR IGNORE INTO weekly_reports_new 
+                    SELECT id, title, content, created_time 
+                    FROM weekly_reports 
+                    GROUP BY title;
+                DROP TABLE weekly_reports;
+                ALTER TABLE weekly_reports_new RENAME TO weekly_reports;",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
