@@ -51,5 +51,6 @@ declare namespace API {
     startDate?: string
     endDate?: string
     authors?: string[]
+    branches?: string[]
   }
 }

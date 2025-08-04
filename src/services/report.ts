@@ -4,7 +4,7 @@ import { notification } from 'antd'
 import { getApiKey, getReportPrompt, getUserPrompt } from './settings'
 
 async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOutput[]> {
-  const { projectPath, startDate, endDate, authors } = options
+  const { projectPath, startDate, endDate, authors, branches } = options
 
   try {
     // 构建基本命令
@@ -14,7 +14,11 @@ async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOu
     if (startDate || endDate) {
       args.push('--date-order')
       if (startDate) args.push(`--after=${startDate}`)
-      if (endDate) args.push(`--before=${endDate}`)
+      if (endDate) {
+        // 如果endDate只是日期格式（不包含时间），则添加23:59:59确保包含当天的所有提交
+        const endDateWithTime = endDate.includes(' ') || endDate.includes('T') ? endDate : `${endDate} 23:59:59`
+        args.push(`--before=${endDateWithTime}`)
+      }
     }
 
     // 添加作者过滤参数
@@ -22,6 +26,35 @@ async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOu
       authors.forEach((author) => {
         args.push(`--author=${author}`)
       })
+    }
+
+    // 添加分支参数
+    if (branches?.length) {
+      // 验证分支是否存在
+      const validBranches = []
+      for (const branch of branches) {
+        try {
+          const branchCheck = await Command.create('git', [
+            '-C',
+            projectPath,
+            'rev-parse',
+            '--verify',
+            branch,
+          ]).execute()
+          if (!branchCheck.stderr) {
+            validBranches.push(branch)
+          }
+        } catch (error) {
+          console.warn(`分支 ${branch} 不存在，已跳过`)
+        }
+      }
+
+      // 只添加存在的分支
+      if (validBranches.length > 0) {
+        validBranches.forEach((branch) => {
+          args.push(branch)
+        })
+      }
     }
 
     // 执行命令
@@ -71,6 +104,7 @@ export async function getReportContent(params: API.GetReportContentInput): Promi
         startDate: params.start,
         endDate: params.end,
         authors: params.authors,
+        branches: project.branches,
       })
 
       if (commits.length > 0) {
