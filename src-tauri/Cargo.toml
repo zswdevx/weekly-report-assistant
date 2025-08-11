@@ -1,6 +1,6 @@
 [package]
 name = "weekly-report-assistant"
-version = "0.2.1"
+version = "0.2.2"
 description = "A weekly report assistant."
 license = "MIT"
 authors = ["zhouswchn@outlook.com"]

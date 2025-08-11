@@ -1,7 +1,7 @@
 {
   "name": "weekly-report-assistant",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "scripts": {
     "tarui:dev": "tauri dev",
@@ -9,7 +9,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "update-version": "node scripts/update-version.js",
+    "update-version:auto": "node scripts/update-version.js --auto",
+    "update-version:skip-cargo": "node scripts/update-version.js --skip-cargo"
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",

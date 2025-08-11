@@ -1,7 +1,7 @@
 # 周报助手 (Weekly Report Assistant)
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-0.2.1-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.2-green.svg)
 
 一款基于 Tauri + React 开发的桌面应用程序，帮助开发团队自动生成高质量周报。通过解析 Git 提交记录，快速生成个人或团队周报内容。
 
