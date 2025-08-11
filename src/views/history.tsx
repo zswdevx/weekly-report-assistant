@@ -97,6 +97,7 @@ const History = () => {
         title={currentReport?.title || '周报详情'}
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
+        centered
         width={700}
         footer={[
           <Button key="copy" type="primary" onClick={handleCopyContent}>
@@ -107,7 +108,9 @@ const History = () => {
           </Button>,
         ]}
       >
-        <div style={{ whiteSpace: 'pre-wrap' }}>{currentReport?.content}</div>
+        <div className="whitespace-pre-wrap overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          {currentReport?.content}
+        </div>
       </Modal>
 
       <Modal
