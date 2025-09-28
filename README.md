@@ -5,7 +5,7 @@
 
 一款基于 Tauri + React 开发的桌面应用程序，帮助开发团队自动生成高质量周报。通过解析 Git 提交记录，快速生成个人或团队周报内容。
 
-![应用预览](public/logo.svg)
+![应用主图](public/readme-assets/cover.png)
 
 ## 功能特点
 
