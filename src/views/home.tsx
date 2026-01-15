@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button, Card, DatePicker, Flex, Input, message } from 'antd'
+import { Button, Card, DatePicker, Flex, Input, message, Tooltip } from 'antd'
 import dayjs from 'dayjs'
 import { RangePickerProps } from 'antd/es/date-picker'
 import { useRequest } from 'ahooks'
@@ -7,6 +7,7 @@ import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import { getReportContent, polishReport } from '@/services/report'
 import { saveOrUpdateWeeklyReport } from '@/services/weeklyReport'
 import useAuthor from '@/hooks/useAuthor'
+import { getApiKey } from '@/services/settings'
 
 type DateRange = RangePickerProps['value']
 
@@ -51,7 +52,7 @@ const Home = () => {
       debouncedSave(currentTitle, report)
     }
   }, [report, debouncedSave])
-
+  const { data: apiKey } = useRequest(getApiKey)
   const { run: runGetReport, loading: getReportLoading } = useRequest(getReportContent, {
     manual: true,
     onSuccess(res) {
@@ -130,6 +131,11 @@ const Home = () => {
     }
   }
 
+  const aiPolishAction = (
+    <Button type="primary" danger onClick={handlePolish} loading={polishLoading} disabled={!report || !apiKey}>
+      AI 润色
+    </Button>
+  )
   return (
     <>
       <Flex vertical gap={12}>
@@ -139,9 +145,7 @@ const Home = () => {
             <Button type="primary" onClick={handleGenerate} loading={getReportLoading}>
               生成周报
             </Button>
-            <Button type="primary" danger onClick={handlePolish} loading={polishLoading} disabled={!report}>
-              AI 润色
-            </Button>
+            {apiKey ? aiPolishAction : <Tooltip title="请先配置API密钥">{aiPolishAction}</Tooltip>}
             <Button onClick={onCopy} disabled={!report}>
               复制
             </Button>

@@ -1,6 +1,6 @@
 [package]
 name = "weekly-report-assistant"
-version = "0.2.2"
+version = "0.3.0"
 description = "A weekly report assistant."
 license = "MIT"
 authors = ["zhouswchn@outlook.com"]
@@ -39,6 +39,7 @@ tauri-plugin-shell = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
 
 
 [dependencies.tauri-plugin-sql]

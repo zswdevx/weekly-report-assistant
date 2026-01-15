@@ -1,0 +1,60 @@
+{
+  "types": [
+    {
+      "type": "feat",
+      "section": "✨ 新增"
+    },
+    {
+      "type": "fix",
+      "section": "🐛 修复"
+    },
+    {
+      "type": "perf",
+      "section": "⚡ 性能优化"
+    },
+    {
+      "type": "refactor",
+      "section": "♻️ 重构"
+    },
+    {
+      "type": "docs",
+      "section": "📝 文档",
+      "hidden": false
+    },
+    {
+      "type": "style",
+      "section": "💄 样式",
+      "hidden": true
+    },
+    {
+      "type": "chore",
+      "section": "🔧 构建/工具",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "✅ 测试",
+      "hidden": true
+    }
+  ],
+  "skip": {
+    "bump": false,
+    "changelog": false,
+    "commit": true,
+    "tag": true
+  },
+  "bumpFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    },
+    {
+      "filename": "src-tauri/tauri.conf.json",
+      "type": "json"
+    },
+    {
+      "filename": "src-tauri/Cargo.toml",
+      "updater": "scripts/cargo-version-updater.js"
+    }
+  ]
+}

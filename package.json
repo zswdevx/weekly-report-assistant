@@ -1,7 +1,7 @@
 {
   "name": "weekly-report-assistant",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "tarui:dev": "tauri dev",
@@ -12,7 +12,11 @@
     "tauri": "tauri",
     "update-version": "node scripts/update-version.js",
     "update-version:auto": "node scripts/update-version.js --auto",
-    "update-version:skip-cargo": "node scripts/update-version.js --skip-cargo"
+    "update-version:skip-cargo": "node scripts/update-version.js --skip-cargo",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:first": "standard-version --first-release"
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
@@ -20,8 +24,10 @@
     "@tauri-apps/plugin-clipboard-manager": "~2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "~2",
     "@tauri-apps/plugin-sql": "^2.2.0",
+    "@tauri-apps/plugin-updater": "~2.9.0",
     "ahooks": "^3.8.4",
     "antd": "^5.24.3",
     "dayjs": "^1.11.13",
@@ -42,6 +48,7 @@
     "eslint-plugin-react": "^7.37.4",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
+    "standard-version": "^9.5.0",
     "tailwindcss": "^3",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"

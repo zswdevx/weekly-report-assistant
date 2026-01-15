@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Form, Input, Space, Tabs, message } from 'antd'
+import { Button, Card, Flex, Form, Input, Space, Tabs, message, Modal } from 'antd'
 import { useState, useEffect } from 'react'
 import AuthorTag from '@/components/AuthorTag'
 import {
@@ -10,9 +10,12 @@ import {
   setUserPrompt,
 } from '@/services/settings'
 import useAuthor from '@/hooks/useAuthor'
+import { useUpdater } from '@/hooks/useUpdater'
+import { SyncOutlined, CloudDownloadOutlined } from '@ant-design/icons'
 
 const Settings = () => {
   const { authors, handleAddAuthor, handleDeleteAuthor } = useAuthor()
+  const { updateStatus, checkForUpdates, downloadAndInstall } = useUpdater()
   const [apiKey, setApiKeyState] = useState('')
   const [systemPrompt, setSystemPromptState] = useState('')
   const [userPrompt, setUserPromptState] = useState('')
@@ -38,10 +41,24 @@ const Settings = () => {
     message.success('用户提示词保存成功')
   }
 
+  const handleCheckUpdate = async () => {
+    const update = await checkForUpdates(false)
+
+    if (update) {
+      Modal.confirm({
+        title: '发现新版本',
+        content: `当前版本: ${update.currentVersion}\n最新版本: ${update.version}\n\n是否立即下载并安装？`,
+        onOk: async () => {
+          await downloadAndInstall()
+        },
+      })
+    }
+  }
+
   return (
     <>
       <Flex vertical gap={12}>
-        <Card>
+        <Card title="配置设置">
           <Form.Item className="mb-8" label="Authors">
             <AuthorTag value={authors} onAdd={handleAddAuthor} onDel={handleDeleteAuthor} />
           </Form.Item>
@@ -96,6 +113,30 @@ const Settings = () => {
               },
             ]}
           />
+        </Card>
+
+        <Card title="应用更新">
+          <Space>
+            <Button
+              type="primary"
+              icon={<SyncOutlined spin={updateStatus.checking} />}
+              onClick={handleCheckUpdate}
+              loading={updateStatus.checking}
+            >
+              检查更新
+            </Button>
+            {updateStatus.available && (
+              <Button
+                type="default"
+                icon={<CloudDownloadOutlined />}
+                onClick={downloadAndInstall}
+                loading={updateStatus.downloading}
+              >
+                下载并安装 v{updateStatus.latestVersion}
+              </Button>
+            )}
+          </Space>
+          {updateStatus.error && <div style={{ marginTop: 8, color: '#ff4d4f' }}>错误: {updateStatus.error}</div>}
         </Card>
       </Flex>
     </>
