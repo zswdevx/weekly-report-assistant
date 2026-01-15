@@ -12,6 +12,11 @@ jobs:
   publish-tauri:
     permissions:
       contents: write
+    env:
+      # Make secrets available to all steps in this job (debug steps included).
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,9 +44,6 @@ jobs:
 
       - name: Validate updater signing secrets
         shell: pwsh
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) {
             throw "Missing secret: TAURI_SIGNING_PRIVATE_KEY. Without it Tauri cannot produce .sig and tauri-action cannot generate latest.json."
@@ -54,10 +56,6 @@ jobs:
       # - Use a unique tag for dev builds to avoid clashing with production tags.
       - uses: tauri-apps/tauri-action@action-v0.6.1
         id: tauri-build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref == 'refs/heads/main' && 'v__VERSION__' || format('dev-v__VERSION__-{0}', github.run_number) }}
           releaseName: ${{ github.ref == 'refs/heads/main' && '周报助手 v__VERSION__' || format('[测试] 周报助手 v__VERSION__ (run {0})', github.run_number) }}
@@ -67,6 +65,7 @@ jobs:
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
           generateReleaseNotes: true
+          uploadUpdaterSignatures: true
           args: ${{ format('--config src-tauri/tauri.conf.json {0}', matrix.args) }}
 
       - name: Debug signing env presence
@@ -74,8 +73,8 @@ jobs:
         run: |
           $k = $env:TAURI_SIGNING_PRIVATE_KEY
           $p = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-          Write-Host ("TAURI_SIGNING_PRIVATE_KEY length: {0}" -f ($k?.Length ?? 0))
-          Write-Host ("TAURI_SIGNING_PRIVATE_KEY_PASSWORD length: {0}" -f ($p?.Length ?? 0))
+          Write-Host ("TAURI_SIGNING_PRIVATE_KEY present: {0}" -f (-not [string]::IsNullOrWhiteSpace($k)))
+          Write-Host ("TAURI_SIGNING_PRIVATE_KEY_PASSWORD present: {0}" -f (-not [string]::IsNullOrWhiteSpace($p)))
 
       - name: Debug tauri-action outputs
         shell: pwsh
@@ -91,4 +90,15 @@ jobs:
             Get-ChildItem -Recurse $bundlePath | Select-Object FullName, Length | Format-Table -AutoSize
           } else {
             Write-Host "Bundle dir not found: $bundlePath"
+          }
+
+      - name: Debug signature files
+        shell: pwsh
+        run: |
+          $sigFiles = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -Filter "*.sig" -ErrorAction SilentlyContinue
+          if ($sigFiles) {
+            Write-Host "Found .sig files:"
+            $sigFiles | Select-Object FullName, Length | Format-Table -AutoSize
+          } else {
+            Write-Host "No .sig files found under bundle/. This will prevent latest.json generation."
           }
