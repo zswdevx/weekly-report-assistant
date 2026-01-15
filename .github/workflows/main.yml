@@ -37,6 +37,18 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
+      - name: Validate updater signing secrets
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY)) {
+            throw "Missing secret: TAURI_SIGNING_PRIVATE_KEY. Without it Tauri cannot produce .sig and tauri-action cannot generate latest.json."
+          }
+          # Password can be empty if your key was generated without a password.
+          Write-Host "Signing key present."
+
       # NOTE:
       # - Use a pinned stable action tag (the repo does NOT provide a `v1` tag).
       # - Use a unique tag for dev builds to avoid clashing with production tags.
