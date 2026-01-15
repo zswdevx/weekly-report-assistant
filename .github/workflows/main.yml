@@ -44,10 +44,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         with:
-          tagName: ${{ github.ref == 'refs/heads/main' && 'v__VERSION__' || '' }}
-          releaseName: ${{ github.ref == 'refs/heads/main' && '周报助手 v__VERSION__' || '' }}
+          tagName: v__VERSION__
+          releaseName: ${{ github.ref == 'refs/heads/main' && '周报助手 v__VERSION__' || '[测试] 周报助手 v__VERSION__' }}
           releaseBody: '对比上个版本的所有改动，请见提交历史。'
-          releaseDraft: ${{ github.ref == 'refs/heads/main' }}
+          releaseDraft: true
           prerelease: false
-          uploadUpdaterJson: ${{ github.ref == 'refs/heads/main' }}
+          uploadUpdaterJson: true
           args: ${{ matrix.args }}
