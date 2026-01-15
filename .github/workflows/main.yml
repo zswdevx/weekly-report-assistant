@@ -51,6 +51,27 @@ jobs:
           # Password can be empty if your key was generated without a password.
           Write-Host "Signing key present."
 
+          # Heuristic check: many CI setups require the minisign private key to be base64-encoded.
+          # We do NOT print the key; we only print whether it looks valid.
+          $looksBase64 = $false
+          $looksMinisign = $false
+          try {
+            $bytes = [Convert]::FromBase64String($env:TAURI_SIGNING_PRIVATE_KEY)
+            $looksBase64 = $true
+            $decoded = [Text.Encoding]::UTF8.GetString($bytes)
+            if ($decoded -match 'minisign\s+private\s+key' -or $decoded -match 'untrusted\s+comment') {
+              $looksMinisign = $true
+            }
+          } catch {
+            $looksBase64 = $false
+          }
+          Write-Host ("TAURI_SIGNING_PRIVATE_KEY looks base64: {0}" -f $looksBase64)
+          if ($looksBase64) {
+            Write-Host ("TAURI_SIGNING_PRIVATE_KEY decoded looks like minisign key: {0}" -f $looksMinisign)
+          } else {
+            Write-Host "Hint: If signing still doesn't work, store the minisign private key as a single-line base64 string in the secret."
+          }
+
       # NOTE:
       # - Use a pinned stable action tag (the repo does NOT provide a `v1` tag).
       # - Use a unique tag for dev builds to avoid clashing with production tags.
@@ -66,7 +87,8 @@ jobs:
           updaterJsonPreferNsis: true
           generateReleaseNotes: true
           uploadUpdaterSignatures: true
-          args: ${{ format('--config src-tauri/tauri.conf.json {0}', matrix.args) }}
+          projectPath: src-tauri
+          args: ${{ matrix.args }}
 
       - name: Debug signing env presence
         shell: pwsh
