@@ -70,9 +70,7 @@ jobs:
         run: |
           $currentTag = $env:TAG_NAME
           $previousTag = git tag --sort=-version:refname | Select-Object -Skip 1 -First 1
-          $title = "周报助手 $currentTag"
-
-          @("# $title", "") | Set-Content release-notes.md
+          @() | Set-Content release-notes.md
 
           if ($previousTag) {
             "更新范围: $previousTag -> $currentTag" | Add-Content release-notes.md
