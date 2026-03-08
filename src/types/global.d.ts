@@ -8,6 +8,7 @@ declare namespace API {
   interface Settings {
     authors: string[]
     apiKey: string
+    autoCheckUpdate: boolean
   }
 
   type GetProjectConfigsOutput = {

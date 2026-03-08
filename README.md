@@ -1,7 +1,7 @@
 # 周报助手 (Weekly Report Assistant)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-0.2.2-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.0-green.svg)
 
 一款基于 Tauri + React 开发的桌面应用程序，帮助开发团队自动生成高质量周报。通过解析 Git 提交记录，快速生成个人或团队周报内容。
 
@@ -72,6 +72,48 @@ pnpm tarui:build
 - **作者配置**：添加团队成员姓名，用于过滤 Git 提交记录
 - **API 密钥**：可选配置，用于使用 AI 服务优化周报内容
 - **项目管理**：添加或移除需要监控的 Git 项目
+
+## 发布与自动更新
+
+### 触发发布
+
+工作流定义在 [.github/workflows/release.yml](.github/workflows/release.yml)，仅在推送版本标签时触发：
+
+1. 更新版本号，保持 `package.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml` 一致。
+2. 提交代码后创建并推送标签，例如 `v0.3.1`：
+
+```bash
+git tag v0.3.1
+git push origin main --follow-tags
+```
+
+3. GitHub Actions 会执行以下流程：
+   - 校验 tag 与项目版本是否一致
+   - 构建 Windows 安装包和 updater artifacts
+   - 自动创建 GitHub Release
+   - 上传安装包、签名文件以及 `latest.json`
+4. 客户端会从 `https://github.com/zswdevx/weekly-report-assistant/releases/latest/download/latest.json` 检查更新。
+
+### 自动更新密钥与配置
+
+1. 生成更新签名密钥（会输出公钥，并在本地生成私钥文件）：
+
+```bash
+pnpm tauri signer generate --password <你的密码> --write-keys weekly-report-assistant.key
+```
+
+2. 将生成的 **公钥内容** 填入 [src-tauri/tauri.conf.json](src-tauri/tauri.conf.json) 的 `plugins.updater.pubkey`。
+3. 将 **私钥文件内容** 和密码写入 GitHub Secrets：
+   - `TAURI_SIGNING_PRIVATE_KEY`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+4. 不要提交私钥文件；当前 `.gitignore` 已忽略默认私钥文件名。
+5. 发布后，客户端会从 GitHub Release 的 `latest.json` 自动检查更新。
+
+### 版本发布建议
+
+- 本地改版本可继续使用 `pnpm version`
+- 发布前先执行 `pnpm test` 和 `pnpm tarui:build`
+- 只有当 tag 名与三个版本文件完全一致时，GitHub Actions 才会继续发布
 
 ## 数据库结构
 

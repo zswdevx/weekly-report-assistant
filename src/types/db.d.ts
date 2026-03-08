@@ -19,5 +19,6 @@ declare namespace DB {
   interface Settings {
     authors?: string
     api_key?: string
+    auto_check_update?: number | null
   }
 }

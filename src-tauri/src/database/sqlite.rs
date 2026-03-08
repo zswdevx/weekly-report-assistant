@@ -73,6 +73,12 @@ pub fn get_migrations() -> Vec<Migration> {
                 ALTER TABLE weekly_reports_new RENAME TO weekly_reports;",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "Add auto_check_update field to settings table",
+            sql: "ALTER TABLE settings ADD COLUMN auto_check_update INTEGER NOT NULL DEFAULT 1;",
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

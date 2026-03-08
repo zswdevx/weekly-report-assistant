@@ -16,6 +16,7 @@
     "sql:default",
     "sql:allow-load",
     "sql:allow-execute",
+    "process:default",
     "shell:default",
     {
       "identifier": "shell:allow-execute",

@@ -2,6 +2,7 @@ import { RouterProvider } from "react-router-dom";
 import routes from "./router";
 import { Suspense } from "react";
 import { Flex, Spin } from "antd";
+import UpdateManager from "./components/UpdateManager";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         </Flex>
       }
     >
+      <UpdateManager />
       <RouterProvider router={routes} />
     </Suspense>
   );

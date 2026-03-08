@@ -2,6 +2,7 @@ import { getAllProjectConfigs } from './projectConfig'
 import { Command } from '@tauri-apps/plugin-shell'
 import { notification } from 'antd'
 import { getApiKey, getReportPrompt, getUserPrompt } from './settings'
+import { formatCommitMessage } from '@/utils/utils'
 
 async function getGitLogs(options: API.GetGitLogInput): Promise<API.GetGitLogsOutput[]> {
   const { projectPath, startDate, endDate, authors, branches } = options
@@ -110,7 +111,7 @@ export async function getReportContent(params: API.GetReportContentInput): Promi
       if (commits.length > 0) {
         reportData.push({
           name: project.name,
-          content: commits.map((commit) => `- ${commit.message}`),
+          content: commits.map((commit) => `- ${formatCommitMessage(commit.message)}`),
         })
       }
     }

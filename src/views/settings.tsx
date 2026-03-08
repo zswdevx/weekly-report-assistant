@@ -1,9 +1,12 @@
-import { Button, Card, Flex, Form, Input, Space, Tabs, message } from 'antd'
+import { Button, Card, Flex, Form, Input, Space, Switch, Tabs, message } from 'antd'
 import { useState, useEffect } from 'react'
 import AuthorTag from '@/components/AuthorTag'
+import { runManualUpdateCheck } from '@/components/UpdateManager'
 import {
   getApiKey,
+  getAutoCheckUpdate,
   setApiKey,
+  setAutoCheckUpdate,
   getReportPrompt,
   setReportPrompt,
   getUserPrompt,
@@ -16,11 +19,14 @@ const Settings = () => {
   const [apiKey, setApiKeyState] = useState('')
   const [systemPrompt, setSystemPromptState] = useState('')
   const [userPrompt, setUserPromptState] = useState('')
+  const [autoCheckUpdate, setAutoCheckUpdateState] = useState(true)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   useEffect(() => {
     getApiKey().then((key) => setApiKeyState(key || ''))
     getReportPrompt().then((prompt) => setSystemPromptState(prompt || ''))
     getUserPrompt().then((prompt) => setUserPromptState(prompt || ''))
+    getAutoCheckUpdate().then((enabled) => setAutoCheckUpdateState(enabled))
   }, [])
 
   const handleSaveApiKey = async (value: string) => {
@@ -38,10 +44,26 @@ const Settings = () => {
     message.success('用户提示词保存成功')
   }
 
+  const handleAutoCheckUpdateChange = async (checked: boolean) => {
+    await setAutoCheckUpdate(checked)
+    setAutoCheckUpdateState(checked)
+    message.success(checked ? '已开启启动时自动检查更新' : '已关闭启动时自动检查更新')
+  }
+
+  const handleManualCheckUpdate = async () => {
+    setCheckingUpdate(true)
+
+    try {
+      await runManualUpdateCheck()
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }
+
   return (
     <>
       <Flex vertical gap={12}>
-        <Card>
+        <Card title="设置">
           <Form.Item className="mb-8" label="Authors">
             <AuthorTag value={authors} onAdd={handleAddAuthor} onDel={handleDeleteAuthor} />
           </Form.Item>
@@ -52,6 +74,15 @@ const Settings = () => {
                 保存
               </Button>
             </Space.Compact>
+          </Form.Item>
+
+          <Form.Item className="mb-8" label="应用更新">
+            <Space align="center" wrap>
+              <Switch checked={autoCheckUpdate} onChange={handleAutoCheckUpdateChange} checkedChildren="自动检查" unCheckedChildren="已关闭" />
+              <Button onClick={() => void handleManualCheckUpdate()} loading={checkingUpdate}>
+                检查更新
+              </Button>
+            </Space>
           </Form.Item>
 
           <Tabs

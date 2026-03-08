@@ -8,17 +8,19 @@ export const getSettings = async (): Promise<API.Settings> => {
     return {
       authors: settings.authors?.split(',').filter(Boolean) || [],
       apiKey: settings.api_key || '',
+      autoCheckUpdate: settings.auto_check_update !== 0,
     }
   } catch (error) {
-    return { authors: [], apiKey: '' }
+    return { authors: [], apiKey: '', autoCheckUpdate: true }
   }
 }
 
 export const setSettings = async (settings: API.Settings): Promise<boolean> => {
   try {
-    const res = await executeQuery('UPDATE settings SET authors = ?, api_key = ?', [
+    const res = await executeQuery('UPDATE settings SET authors = ?, api_key = ?, auto_check_update = ?', [
       settings.authors.join(','),
       settings.apiKey,
+      settings.autoCheckUpdate ? 1 : 0,
     ])
     return res.rowsAffected > 0
   } catch (error) {
@@ -65,4 +67,13 @@ export const setAuthors = async (authors: string[]): Promise<boolean> => {
   } catch (error) {
     return false
   }
+}
+
+export async function getAutoCheckUpdate(): Promise<boolean> {
+  const result = await select<{ auto_check_update: number | null }>('SELECT auto_check_update FROM settings LIMIT 1')
+  return result[0]?.auto_check_update !== 0
+}
+
+export async function setAutoCheckUpdate(enabled: boolean): Promise<void> {
+  await executeQuery('UPDATE settings SET auto_check_update = ?', [enabled ? 1 : 0])
 }

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+weekly-report-assistant
+weekly-report-assistant.key
+weekly-report-assistant.key.pub
+!weekly-report-assistant.pub

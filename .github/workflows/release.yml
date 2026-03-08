@@ -1,0 +1,110 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-tauri:
+    runs-on: windows-latest
+    env:
+      TAG_NAME: ${{ github.ref_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Configure pnpm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          $tagVersion = $env:TAG_NAME.TrimStart('v')
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          $tauriVersion = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $cargoVersion = Get-Content src-tauri/Cargo.toml | Select-String -Pattern '^version = "(.+)"$' | Select-Object -First 1 | ForEach-Object { $_.Matches[0].Groups[1].Value }
+
+          if ($tagVersion -ne $packageVersion) {
+            throw "Tag version $tagVersion does not match package.json version $packageVersion"
+          }
+
+          if ($tagVersion -ne $tauriVersion) {
+            throw "Tag version $tagVersion does not match src-tauri/tauri.conf.json version $tauriVersion"
+          }
+
+          if ($tagVersion -ne $cargoVersion) {
+            throw "Tag version $tagVersion does not match src-tauri/Cargo.toml version $cargoVersion"
+          }
+
+      - name: Generate release notes
+        shell: pwsh
+        run: |
+          $currentTag = $env:TAG_NAME
+          $previousTag = git tag --sort=-version:refname | Select-Object -Skip 1 -First 1
+          $title = "周报助手 $currentTag"
+
+          @("# $title", "") | Set-Content release-notes.md
+
+          if ($previousTag) {
+            "更新范围: $previousTag -> $currentTag" | Add-Content release-notes.md
+            "" | Add-Content release-notes.md
+            $commits = git log --pretty=format:"- %s (%h)" "$previousTag..$currentTag"
+          } else {
+            "首次正式发布" | Add-Content release-notes.md
+            "" | Add-Content release-notes.md
+            $commits = git log --pretty=format:"- %s (%h)" $currentTag
+          }
+
+          if ([string]::IsNullOrWhiteSpace($commits)) {
+            "- Release $currentTag" | Add-Content release-notes.md
+          } else {
+            $commits | Add-Content release-notes.md
+          }
+
+      - name: Build app and upload release assets
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ env.TAG_NAME }}
+          releaseName: 周报助手 ${{ env.TAG_NAME }}
+          releaseBody: See release-notes.md for details.
+          releaseDraft: false
+          prerelease: false
+
+      - name: Update GitHub release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: gh release edit $env:TAG_NAME --title "周报助手 $env:TAG_NAME" --notes-file release-notes.md
